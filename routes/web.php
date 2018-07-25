@@ -50,6 +50,14 @@ Route::group(['middleware' => 'rbac'],function(){
 		'uses' => 'UserController@create',
 		'as' => 'user.create'
 	]);
+	Route::get('user/{user}/edit', [
+			'uses' => 'UserController@edit',
+			'as' => 'user.edit',
+		]);
+	Route::post('user/{user}/update', [
+			'uses' => 'UserController@update',
+			'as' => 'user.update',
+		]);
 
 	Route::post('user/updatephoto',[
 		'uses' => 'UserController@updatePhoto',
@@ -59,6 +67,11 @@ Route::group(['middleware' => 'rbac'],function(){
 		'uses' => 'UserController@profile',
 		'as' => 'user.profile'
 	]);
+
+	Route::get('user/{user}/delete', [
+			'uses' => 'UserController@delete',
+			'as' => 'user.delete',
+		]);
 
 	Route::get('role/add',[
 		'uses' => 'RoleController@add',

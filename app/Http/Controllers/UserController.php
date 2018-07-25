@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Http\Requests;
+use App\User;
 use Image;
 
 class UserController extends Controller
 {
     public function index(){
-    	$users = \App\User::paginate(10);
+    	$users = User::paginate(10);
     	return view('users.index',['users' => $users,'no' => 1]);
     }
 
@@ -21,6 +22,7 @@ class UserController extends Controller
     }
 
     public function create(Request $request){
+      //dd($request->all());
       $this->validate($request, [
         'username' => 'required|unique:users|min:3',
         'email' => 'required|email|unique:users',
@@ -41,9 +43,11 @@ class UserController extends Controller
         }
       }
 
-      $user =  new \App\User;
+      $user =  new User;
 
       $user->username = $request->input('username');
+      $user->first_name = $request->input('first_name');
+      $user->last_name = $request->input('last_name');
       $user->email = $request->input('email');
       $user->password = bcrypt($request->input('password'));
       $user->role_id = $request->input('role_id');
@@ -56,14 +60,34 @@ class UserController extends Controller
       $user->twitter_url = $request->input('twitter_url');
       $user->google_plus_url = $request->input('google_plus_url');      
       $user->save();      
-      //\App\User::create($request->all());
+      
 
       return redirect()->route('users.index')->with('success','User has been created successfully');
     }   
 
+    public function edit(User $user)
+    {
+      $roles = \App\Role::pluck('name','id')->toArray();
+      $roles = array_prepend($roles,'Select Role','');
+      return view('users.edit',compact(['roles','user']));
+    }
+
+    public function update(Request $request,User $user)
+    {      
+      if($request->password != ''){
+        $password = $request->password;
+        $request->merge(['password' => bcrypt($password)]);        
+        $user->update($request->all());
+      }else{
+        $user->update($request->except(['password']));
+      }     
+
+      return redirect()->route('user.profile',['username'=>$user->username])->with('success','User has been successfully updated');
+    }
+
     public function profile($username)
     {
-      $user = \App\User::where('username',$username)->firstOrfail();
+      $user = User::where('username',$username)->firstOrfail();
       if(!$user){
         return redirect()->route('error.404');
       }
@@ -84,7 +108,7 @@ class UserController extends Controller
         return 'not uploaded';
       }
 
-      $user = \App\User::findOrFail($request->input('id'));
+      $user = User::findOrFail($request->input('id'));
 
       $user->photo = $filename;
       $user->save();
@@ -94,51 +118,13 @@ class UserController extends Controller
 
     public function myprofile()
     {
-      $user = \App\User::findOrFail(\Auth::user()->id);
+      $user = User::findOrFail(\Auth::user()->id);
       //dd($user);
       return view('users/myprofile',compact(['user']));
     }
-
-    public function myprofilepembayaran()
+    public function delete(User $user)
     {
-       $user = \App\User::findOrfail(\Auth::user()->id);
-
-        return view('users.pembayaran',compact(['user']));
+      $user->delete();
+      return redirect()->route('users.index')->with('success','User has been deleted');
     }
-
-    public function myprofiletagihan()
-    {
-      $user = \Auth::user();
-      $tagihan = \App\Tagihan::whereMahasiswaId($user->mahasiswa->id)->get();
-      return view('users.tagihan',compact(['tagihan','user']));
-    }
-
-    public function myprofilekhs()
-    {
-      $user = \Auth::user();
-      return view('users.khs',compact(['user']));
-    }
-
-    public function myprofilekrs()
-    {
-      $user = \Auth::user();
-      $krs = \App\Krs::whereMahasiswaId(\Auth::user()->mahasiswa->id)->orderBy('created_at','desc')->get();      
-      return view('users.krs',compact(['krs','user']));
-    }
-
-    public function ajaxdetailbayar(Request $request)
-    {
-      $tagihan = \App\Tagihan::find($request->input('tagihan_id'));
-      $view = view('users/ajaxdetailbayar',compact(['tagihan']))->render();
-      return response()->json(['msg' => 'Berhasil','view' => $view]);
-    }
-
-    public function ajaxkonfirmasipembayaran(Request $request)
-    {
-      $via = \App\PembayaranVia::select(\DB::raw("CONCAT(nama,' ',nama_bank,' ',atas_nama,' ',no_rekening) AS fullrekening, id"))->where('nama','!=','Tunai')->lists('fullrekening','id')->prepend('Pilih Rekening','')->toArray();
-      $tagihan = \App\Tagihan::find($request->input('tagihan_id'));      
-      $view = view('users/ajaxformkonfirmasipembayaran',compact(['tagihan','via']))->render();
-      return response()->json(['msg' => 'Berhasil','view' => $view]);
-    }
-
 }
