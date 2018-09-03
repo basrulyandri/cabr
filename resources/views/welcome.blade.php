@@ -75,11 +75,19 @@
 
             <div class="content">
                 <div class="title m-b-md">
-                    airbersih.id
+                    Halo, {{auth()->user()->fullName()}} ({{auth()->user()->totalPermissions()}})
                 </div>
 
                 <div class="links">
-                    <a href="{{route('auth.login')}}">Login</a>                  
+                    @if(auth()->check())
+                        <a href="{{route('auth.logout')}}">Logout</a> 
+                    @else
+                        <a href="{{route('auth.login')}}">Login</a>
+                    @endif
+
+                    @if(auth()->check() && auth()->user()->canAccess('dashboard.index'))
+                        <a href="{{route('dashboard.index')}}">Dashboard</a>
+                    @endif                 
                 </div>
             </div>
         </div>

@@ -24,7 +24,7 @@ class User extends Authenticatable
     ];
 
     public function role(){
-        return $this->belongsTo('\App\Role');
+        return $this->belongsTo(Role::class);
     }
 
     public function getNameOrEmail($fullname = false)
@@ -51,7 +51,7 @@ class User extends Authenticatable
         //     return true;
         // }
 
-        if(!in_array($routeName,$permissions) AND \Auth::user()->role->name !== 'Superadmin'){
+        if(!in_array($routeName,$permissions)){
             return false;
         }
 
@@ -74,6 +74,16 @@ class User extends Authenticatable
         }
 
         return url('assets/backend/img').'/default.jpg';
+    }
+
+    public function fullName()
+    {
+        return $this->first_name.' '.$this->last_name;
+    }
+
+    public function totalPermissions()
+    {
+        return $this->role->permissions->count();
     }
 
 }

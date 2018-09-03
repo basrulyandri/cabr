@@ -40,7 +40,7 @@ class RoleController extends Controller
 
     function update($id, Request $request){
 
-        //dd($request->all());
+        //dd($request->perms);
     	
         $role = \App\Role::findOrFail($id);    	   	
     	if($request->input('perms')){
